@@ -7,10 +7,10 @@ holds the same list, so use whichever you like.
 
 ## Up next
 
-- [ ] Put Gus on GitHub (waiting on you: log in with `gh auth login`)
 
 ## Done
 
+- [x] Put Gus on GitHub: https://github.com/DarshiDavinci/gus-the-tooter
 - [x] Update the README for my cousin
 - [x] Commit the game and graphics upgrade
 - [x] Set up the task board and TODO.md

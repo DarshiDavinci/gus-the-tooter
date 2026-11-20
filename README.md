@@ -59,8 +59,8 @@ Gus is made for Linux desktops running Wayland with
 also need Qt 6, PipeWire (`pw-play`) and Python 3 to build.
 
 ```sh
-git clone <this repo>
-cd gus
+git clone https://github.com/DarshiDavinci/gus-the-tooter.git
+cd gus-the-tooter
 bin/install-user    # installs into ~/.local, no password needed
 ```
 
