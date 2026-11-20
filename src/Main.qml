@@ -151,6 +151,35 @@ ApplicationWindow {
                     }
                 }
 
+                Section { title: qsTr("Explosion") }
+
+                RowLayout {
+                    Layout.leftMargin: 24; Layout.rightMargin: 16
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        font.pixelSize: 15
+                        text: qsTr("Explodes if you don't click him")
+                    }
+                    Switch {
+                        checked: backend.explodes
+                        onToggled: backend.explodes = checked
+                    }
+                }
+
+                Setting {
+                    enabled: backend.explodes
+                    opacity: enabled ? 1 : 0.4
+                    label: qsTr("Explodes after")
+                    value: qsTr("%n seconds", "", backend.fuse)
+                    Slider {
+                        Layout.fillWidth: true
+                        from: 2; to: 60; stepSize: 1
+                        value: backend.fuse
+                        onMoved: backend.fuse = Math.round(value)
+                    }
+                }
+
                 Section { title: qsTr("Sound") }
 
                 RowLayout {

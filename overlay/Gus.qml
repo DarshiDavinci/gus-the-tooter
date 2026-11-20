@@ -3,6 +3,7 @@
 // centre; `facing: -1` mirrors him. shell.qml drives the walk and the moods.
 import QtQuick
 import QtQuick.Shapes
+import QtQuick.Effects
 
 Item {
     id: g
@@ -21,6 +22,11 @@ Item {
     property real turn: 1           // horizontal squeeze while he turns round
     property real pantsDown: 0      // 0 belted … 1 round his ankles
     property real bend: 0           // 0 upright … 1 bent over
+    property real swell: 0          // 0 normal … 1 about to burst
+    property real hang: 0           // 0 arms down … 1 arms up, legs dangling (rope, parachute, jumps)
+    property real shadowOpacity: 1  // his own ground shadow, hidden while he's in the air
+    property int badge: 0           // how many times he's been clicked, on his shirt
+    property real buttPuff: 0       // 0 normal … 1 swollen mid-toot
 
     // Colours
     readonly property color ink: "#2b1838"
@@ -33,8 +39,10 @@ Item {
 
     // Walk cycle. Legs swing like pendulums; the hips drop as they spread so
     // the feet stay planted on the ground.
-    readonly property real legSwing: stride * 30 * Math.sin(walkPhase)
-    readonly property real armSwing: stride * 32 * Math.sin(walkPhase)
+    readonly property real legSwing: stride * 30 * Math.sin(walkPhase) * (1 - hang) + hang * 14 * Math.sin(time * 5)
+    readonly property real armSwing: stride * 32 * Math.sin(walkPhase) * (1 - hang)
+    // Arms thrown up (and flailing a little) while hanging or jumping.
+    readonly property real armUp: hang * (-150 + 14 * Math.sin(time * 7))
     readonly property real hipDrop: 78 * (1 - Math.cos(legSwing * Math.PI / 180))
     readonly property real breath: (1 - stride) * Math.sin(time * 2.4)
     readonly property real squash: 1 + stride * 0.04 * Math.cos(2 * walkPhase) + breath * 0.014
@@ -64,6 +72,7 @@ Item {
     // Soft ground shadow; it shrinks a little as he rises mid-step.
     Shape {
         id: shadow
+        opacity: g.shadowOpacity
         x: 40; y: 240
         width: 120; height: 120
         preferredRendererType: Shape.CurveRenderer
@@ -112,7 +121,11 @@ Item {
         Item {
             width: 200; height: 300
             z: 2
-            transform: Scale { origin.x: 100; origin.y: 260; xScale: 1 + Math.abs(g.jitter) * 0.025; yScale: 1 - Math.abs(g.jitter) * 0.02 }
+            transform: Scale {
+                origin.x: 100; origin.y: 250
+                xScale: 1 + g.buttPuff * 0.5 + Math.abs(g.jitter) * 0.025
+                yScale: 1 + g.buttPuff * 0.32 - Math.abs(g.jitter) * 0.02
+            }
             Repeater {
                 model: [58, 98]
                 Rectangle {
@@ -124,7 +137,12 @@ Item {
                         GradientStop { position: 1; color: "#e8906c" }
                     }
                     border.color: g.ink; border.width: 4
-                    Rectangle { x: modelData < 90 ? 10 : 22; y: 24; width: 12; height: 8; radius: 4; color: "white"; opacity: 0.5 }
+                    Rectangle {
+                        x: modelData < 90 ? parent.width - 16 : 2; y: 6; width: 14; height: parent.height - 14; radius: 7
+                        color: "#c9654a"; opacity: 0.35
+                    }
+                    Rectangle { x: modelData < 90 ? 9 : 22; y: 14; width: 16; height: 10; radius: 5; color: "white"; opacity: 0.7; rotation: -25 }
+                    Rectangle { x: modelData < 90 ? 8 : 30; y: 28; width: 5; height: 5; radius: 2.5; color: "white"; opacity: 0.6 }
                     Rectangle { x: modelData < 90 ? 22 : 8; y: 40; width: 14; height: 8; radius: 4; color: "#ff6f7f"; opacity: 0.45 }
                 }
             }
@@ -226,7 +244,30 @@ Item {
                     PathSvg { path: "M100 134 C144 134 164 172 162 200 C160 224 136 232 100 232 C64 232 40 224 38 200 C36 172 56 134 100 134 Z" }
                 }
             }
+            Masked {
+                clipPath: "M100 134 C144 134 164 172 162 200 C160 224 136 232 100 232 C64 232 40 224 38 200 C36 172 56 134 100 134 Z"
+                Blob { x: -40; y: 140; w: 100; h: 130; c: g.shirtShade; o: 0.5 }
+                Blob { x: 140; y: 140; w: 100; h: 130; c: g.shirtShade; o: 0.5 }
+                Blob { x: 50; y: 210; w: 100; h: 40; c: "#7a1f45"; o: 0.3 }
+                Blob { x: 62; y: 128; w: 76; h: 28; c: "#7a1f45"; o: 0.35 }
+                Shape {
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
+                    ShapePath {
+                        strokeColor: "#9c2a52"; strokeWidth: 2.5; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                        PathSvg { path: "M100 150 Q96 180 100 214 M64 176 Q74 190 70 208 M136 176 Q126 190 130 208" }
+                    }
+                }
+            }
             Flower { x: 58; y: 162 }
+            Text {
+                z: 1
+                x: 100 - width / 2; y: 150
+                text: g.badge
+                font.pixelSize: 46; font.weight: Font.Black
+                color: "#fffaf0"
+                style: Text.Outline; styleColor: g.ink
+            }
             Flower { x: 120; y: 176; s: 1.2 }
             Flower { x: 84; y: 200; s: 0.85 }
             Flower { x: 132; y: 146; s: 0.75 }
@@ -262,6 +303,15 @@ Item {
                         PathSvg { path: "M92 31 C86 14 96 8 100 -2 M102 30 C104 14 116 12 114 -4 M110 33 C118 21 130 23 130 9" }
                     }
                 }
+                Masked {
+                    clipPath: "M46 86 A54 58 0 1 1 154 86 A54 58 0 1 1 46 86 Z"
+                    Blob { x: 14; y: 104; w: 172; h: 120; c: "#c9754a"; o: 0.35 }
+                    Rectangle {
+                        x: 46; y: 22; width: 112; height: 120; radius: 58
+                        color: "transparent"; border.color: "#fff1dc"; border.width: 5; opacity: 0.45
+                        transform: Translate { x: 5; y: 5 }
+                    }
+                }
                 Rectangle { x: 66; y: 40; width: 34; height: 14; radius: 7; rotation: -22; color: "white"; opacity: 0.55 }
             }
         }
@@ -281,7 +331,7 @@ Item {
             width: 200; height: 300
             y: g.hipDrop
 
-            Limb { pivotX: 92; pivotY: 150; swing: g.armSwing; isArm: true; far: true }
+            Limb { pivotX: 92; pivotY: 150; swing: g.armSwing + g.armUp; isArm: true; far: true }
             Limb { pivotX: 92; pivotY: 222; swing: -g.legSwing; far: true }
             Limb { pivotX: 106; pivotY: 222; swing: g.legSwing }
 
@@ -314,6 +364,71 @@ Item {
                 Leaf { x: 58; y: 190; rotation: -40 }
                 Leaf { x: 140; y: 186; rotation: 70 }
 
+                Masked {
+                    clipPath: "M100 132 C142 132 162 172 160 205 C158 240 134 252 100 252 C66 252 42 240 40 205 C38 172 58 132 100 132 Z"
+                    // Core shadow down his back and under the belly (light from the upper left).
+                    Blob { x: -46; y: 156; w: 110; h: 150; c: g.shirtShade; o: 0.4 }
+                    Blob { x: 56; y: 228; w: 120; h: 60; c: g.shirtShade; o: 0.35 }
+                    // Shadow cast by his head and chin.
+                    Blob { x: 70; y: 118; w: 90; h: 34; c: "#7a1f45"; o: 0.35 }
+                    // Bounce light along the front, and a soft sheen on the chest.
+                    Blob { x: 150; y: 160; w: 30; h: 70; c: "#ffd0dc"; o: 0.35 }
+                    Blob { x: 64; y: 148; w: 52; h: 22; c: "white"; o: 0.28; rotation: -18 }
+                    // Pocket
+                    Rectangle {
+                        x: 62; y: 150; width: 28; height: 24; radius: 5
+                        color: g.shirtShade; opacity: 0.55
+                        Rectangle { x: 0; y: 0; width: 28; height: 8; radius: 4; color: "#7a1f45"; opacity: 0.6 }
+                    }
+                    // Fabric folds, the button placket and its buttons.
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
+                        ShapePath {
+                            strokeColor: "#9c2a52"; strokeWidth: 2.5; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                            PathSvg { path: "M56 182 Q70 192 66 214 M74 228 Q90 236 106 230 M136 168 Q128 184 134 200 M48 210 Q58 222 72 226" }
+                        }
+                        ShapePath {
+                            strokeColor: g.ink; strokeWidth: 2.5; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                            PathSvg { path: "M124 140 Q148 176 150 226" }
+                        }
+                    }
+                    Repeater {
+                        model: [[134, 160], [143, 184], [148, 208]]
+                        Rectangle {
+                            required property var modelData
+                            x: modelData[0] - 4; y: modelData[1] - 4; width: 8; height: 8; radius: 4
+                            color: "#fffaf0"; border.color: g.ink; border.width: 1.5
+                        }
+                    }
+                }
+                Shape {
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
+                    ShapePath {
+                        strokeColor: g.ink; strokeWidth: 4.5; fillColor: "transparent"; joinStyle: ShapePath.RoundJoin
+                        PathSvg { path: "M100 132 C142 132 162 172 160 205 C158 240 134 252 100 252 C66 252 42 240 40 205 C38 172 58 132 100 132 Z" }
+                    }
+                }
+
+                // Badge with his click count.
+                Rectangle {
+                    x: 106; y: 172; width: 38; height: 38; radius: 19
+                    gradient: Gradient {
+                        GradientStop { position: 0; color: "#ffffff" }
+                        GradientStop { position: 1; color: "#e9e2f2" }
+                    }
+                    border.color: g.ink; border.width: 3
+                    Text {
+                        anchors.centerIn: parent
+                        // Read the right way round whichever way he faces.
+                        transform: Scale { origin.x: width / 2; xScale: g.facing }
+                        text: g.badge
+                        font.pixelSize: g.badge > 99 ? 13 : 18; font.weight: Font.Black
+                        color: g.ink
+                    }
+                }
+
                 // Belt and buckle.
                 Rectangle {
                     x: 47; y: 228; width: 106; height: 12; radius: 6
@@ -341,7 +456,8 @@ Item {
                 }
             }
 
-            Limb { pivotX: 110; pivotY: 152; swing: -g.armSwing; isArm: true }
+            // In front of his face when it's up in the air.
+            Limb { pivotX: 110; pivotY: 152; swing: -g.armSwing + g.armUp * 0.92; isArm: true; z: g.hang > 0.3 ? 5 : 0 }
 
             // Head, with a little lag behind the body as he walks.
             Item {
@@ -383,6 +499,48 @@ Item {
                         PathSvg { path: "M56 82 Q66 89 58 98" }
                     }
                 }
+                Masked {
+                    clipPath: "M52 86 A54 58 0 1 1 160 86 A54 58 0 1 1 52 86 Z"
+                    // Jaw and back-of-skull shadow.
+                    Blob { x: 96; y: 104; w: 110; h: 80; c: "#c9754a"; o: 0.45 }
+                    Blob { x: 30; y: 70; w: 46; h: 100; c: "#c9754a"; o: 0.35 }
+                    // Warm rim light round the back of his head.
+                    Rectangle {
+                        x: 52; y: 22; width: 112; height: 120; radius: 58
+                        color: "transparent"; border.color: "#fff1dc"; border.width: 5; opacity: 0.5
+                        transform: Translate { x: 6; y: 6 }
+                    }
+                    // Five o'clock shadow.
+                    Repeater {
+                        model: 46
+                        Rectangle {
+                            required property int index
+                            readonly property real a: index * 2.39996
+                            readonly property real d: Math.sqrt(index / 46)
+                            x: 140 + Math.cos(a) * d * 26; y: 132 + Math.sin(a) * d * 11
+                            width: 2.2; height: 2.2; radius: 1.1
+                            color: g.ink; opacity: 0.28
+                        }
+                    }
+                    // Wrinkle on the forehead.
+                    Shape {
+                        anchors.fill: parent
+                        preferredRendererType: Shape.CurveRenderer
+                        ShapePath {
+                            strokeColor: "#c9754a"; strokeWidth: 2; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                            PathSvg { path: "M112 50 Q126 46 140 50" }
+                        }
+                    }
+                }
+                Shape {
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
+                    ShapePath {
+                        strokeColor: g.ink; strokeWidth: 4.5; fillColor: "transparent"
+                        PathSvg { path: "M52 86 A54 58 0 1 1 160 86 A54 58 0 1 1 52 86 Z" }
+                    }
+                }
+
                 // Shine on the bald head
                 Rectangle {
                     x: 72; y: 40; width: 34; height: 14; radius: 7
@@ -471,6 +629,21 @@ Item {
                         PathSvg { path: "M158 112 C146 104 126 106 116 121 C128 131 146 128 158 119 C166 128 180 128 186 116 C180 106 168 104 158 112 Z" }
                     }
                 }
+                // Nose shine and nostril, mustache strands.
+                Rectangle { x: 158; y: 90; width: 9; height: 6; radius: 3; color: "white"; opacity: 0.75; rotation: -20 }
+                Rectangle { x: 155; y: 104; width: 7; height: 4; radius: 2; color: "#8c3a24"; opacity: 0.7; rotation: 15 }
+                Shape {
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
+                    ShapePath {
+                        strokeColor: "#2e1608"; strokeWidth: 1.6; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                        PathSvg { path: "M126 118 Q136 114 146 116 M130 123 Q140 121 150 120 M164 116 Q172 114 178 116 M166 121 Q174 121 180 119" }
+                    }
+                    ShapePath {
+                        strokeColor: "#b8774a"; strokeWidth: 2; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                        PathSvg { path: "M134 111 Q146 108 154 112 M164 110 Q172 108 178 111" }
+                    }
+                }
                 // Mouths
                 Shape {
                     anchors.fill: parent
@@ -527,6 +700,8 @@ Item {
                 GradientStop { position: 1; color: cloth }
             }
             border.color: g.ink; border.width: 3.5
+            Rectangle { x: 13; y: 6; width: 2; height: 46; color: "#163552"; opacity: 0.6 }
+            Rectangle { x: 2; y: 48; width: 18; height: 7; radius: 3; color: "#163552"; opacity: 0.45 }
         }
         Rectangle {
             visible: !isArm
@@ -536,7 +711,12 @@ Item {
                 GradientStop { position: 1; color: "#2a1c14" }
             }
             border.color: g.ink; border.width: 3.5
-            Rectangle { x: 24; y: 4; width: 10; height: 4; radius: 2; color: "white"; opacity: 0.35 }
+            Rectangle { x: 24; y: 4; width: 10; height: 4; radius: 2; color: "white"; opacity: 0.45 }
+            // Sole
+            Rectangle { x: 3; y: 13; width: 36; height: 4; radius: 2; color: "#e8d9c4"; opacity: 0.9 }
+            // Laces
+            Rectangle { x: 10; y: 3; width: 9; height: 2; radius: 1; color: "white"; rotation: 20; opacity: 0.85 }
+            Rectangle { x: 13; y: 6; width: 9; height: 2; radius: 1; color: "white"; rotation: -20; opacity: 0.85 }
         }
         // Arm: short sleeve, forearm and hand
         Rectangle {
@@ -547,7 +727,14 @@ Item {
         Rectangle {
             visible: isArm
             x: -1; y: 50; width: 25; height: 25; radius: 12.5
-            color: flesh; border.color: g.ink; border.width: 3.5
+            gradient: Gradient {
+                GradientStop { position: 0; color: far ? g.skin : g.skinLight }
+                GradientStop { position: 1; color: far ? g.skinShade : g.skin }
+            }
+            border.color: g.ink; border.width: 3.5
+            // Thumb and knuckles
+            Rectangle { x: 15; y: 4; width: 9; height: 12; radius: 4.5; color: flesh; border.color: g.ink; border.width: 2.5 }
+            Rectangle { x: 5; y: 15; width: 10; height: 2; radius: 1; color: g.ink; opacity: 0.4 }
         }
         Rectangle {
             visible: isArm
@@ -577,13 +764,73 @@ Item {
             border.color: g.ink; border.width: 3.5
         }
         Rectangle {
-            width: r * 0.95; height: width; radius: width / 2
+            id: iris
+            width: r * 1.15; height: width; radius: width / 2
             x: r - width / 2 + g.pupilX * r / 14
             y: r - height / 2 + g.pupilY * r / 14
-            color: g.ink
+            gradient: Gradient {
+                GradientStop { position: 0; color: "#7ec4ff" }
+                GradientStop { position: 1; color: "#2a64c8" }
+            }
+            border.color: "#163a7a"; border.width: 1.5
             Behavior on x { NumberAnimation { duration: 120 } }
             Behavior on y { NumberAnimation { duration: 120 } }
-            Rectangle { x: parent.width * 0.52; y: parent.height * 0.14; width: parent.width * 0.32; height: width; radius: width / 2; color: "white" }
+            Rectangle { anchors.centerIn: parent; width: parent.width * 0.5; height: width; radius: width / 2; color: g.ink }
+            Rectangle { x: parent.width * 0.5; y: parent.height * 0.1; width: parent.width * 0.32; height: width; radius: width / 2; color: "white" }
+            Rectangle { x: parent.width * 0.22; y: parent.height * 0.62; width: parent.width * 0.14; height: width; radius: width / 2; color: "white"; opacity: 0.8 }
+        }
+        // Upper lid shadow and a thick lash line
+        Rectangle {
+            x: 3; y: 2; width: parent.width - 6; height: r * 0.45; radius: r * 0.22
+            color: g.skinShade; opacity: 0.35
+        }
+        Shape {
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                strokeColor: g.ink; strokeWidth: 4.5; fillColor: "transparent"; capStyle: ShapePath.RoundCap
+                PathSvg { path: "M" + (r * 0.12) + " " + (r * 0.8) + " A" + r + " " + r + " 0 0 1 " + (r * 1.88) + " " + (r * 0.8) }
+            }
+        }
+    }
+
+    // A flat, cel-shaded oval of colour, for shadows and highlights.
+    component Blob: Rectangle {
+        property real w
+        property real h
+        property color c
+        property real o: 1
+        width: w; height: h; radius: Math.min(w, h) / 2
+        color: c; opacity: o
+    }
+
+    // Draws its children clipped to a path, so shading never spills past an outline.
+    component Masked: Item {
+        id: m
+        property string clipPath
+        default property alias content: inner.data
+        width: 200; height: 300
+        Item {
+            id: inner
+            anchors.fill: parent
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: maskShape
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 0.1
+            }
+        }
+        Shape {
+            id: maskShape
+            anchors.fill: parent
+            visible: false
+            layer.enabled: true
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                fillColor: "white"; strokeWidth: -1; strokeColor: "transparent"
+                PathSvg { path: m.clipPath }
+            }
         }
     }
 

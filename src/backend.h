@@ -15,6 +15,8 @@ class Backend : public QObject {
     Q_PROPERTY(int maxWait READ maxWait WRITE setMaxWait NOTIFY settingsChanged)
     Q_PROPERTY(int stay READ stay WRITE setStay NOTIFY settingsChanged)
     Q_PROPERTY(int speed READ speed WRITE setSpeed NOTIFY settingsChanged)
+    Q_PROPERTY(bool explodes READ explodes WRITE setExplodes NOTIFY settingsChanged)
+    Q_PROPERTY(int fuse READ fuse WRITE setFuse NOTIFY settingsChanged)
     Q_PROPERTY(bool sound READ sound WRITE setSound NOTIFY settingsChanged)
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY settingsChanged)
     Q_PROPERTY(QStringList toots READ toots WRITE setToots NOTIFY settingsChanged)
@@ -23,7 +25,8 @@ class Backend : public QObject {
 
 public:
     static constexpr int MinWaitFloor = 3, WaitCeiling = 300, StayFloor = 5, StayCeiling = 120,
-                         SpeedFloor = 30, SpeedCeiling = 250;
+                         SpeedFloor = 30, SpeedCeiling = 250,
+                         FuseFloor = 2, FuseCeiling = 60;
 
     explicit Backend(const QString &configDirectory = {}, const QString &overlayDirectory = {},
                      const QString &qs = {}, QObject *parent = nullptr);
@@ -34,6 +37,8 @@ public:
     int maxWait() const { return m_maxWait; }
     int stay() const { return m_stay; }
     int speed() const { return m_speed; }
+    bool explodes() const { return m_explodes; }
+    int fuse() const { return m_fuse; }
     bool sound() const { return m_sound; }
     int volume() const { return m_volume; }
     QStringList toots() const { return m_toots; }
@@ -44,6 +49,8 @@ public:
     void setMaxWait(int seconds);
     void setStay(int seconds);
     void setSpeed(int pixelsPerSecond);
+    void setExplodes(bool on);
+    void setFuse(int seconds);
     void setSound(bool on);
     void setVolume(int percent);
     void setToots(const QStringList &ids);
@@ -77,6 +84,8 @@ private:
     bool m_running = false;
     int m_minWait = 6, m_maxWait = 20, m_stay = 25, m_speed = 90, m_volume = 80;
     bool m_sound = true;
+    bool m_explodes = true;
+    int m_fuse = 5;
     QStringList m_toots = allToots();
     QString m_error;
     QProcess m_list;

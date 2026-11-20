@@ -1,0 +1,355 @@
+<title>Gus Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Nunito:wght@600;800;900&display=swap">
+<style>
+/* Layout: one narrow column of task cards in three lanes (on it, up next, done), add box on top. */
+:root {
+  --bg: #fff7f0;
+  --card: #ffffff;
+  --ink: #2b1838;
+  --muted: #7a6a80;
+  --line: #ecdde6;
+  --shirt: #ff5d8f;
+  --shirt-soft: #ffe1ea;
+  --sun: #ffcf40;
+  --gas: #7fae2c;
+  --gas-soft: #e9f5d2;
+  --display: "Bowlby One", "Arial Black", Impact, sans-serif;
+  --body: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a1220; --card: #251a2d; --ink: #f6eaf2; --muted: #b3a2bb; --line: #3a2c44;
+    --shirt: #ff7aa3; --shirt-soft: #3d2032; --sun: #ffd65a; --gas: #a6d64e; --gas-soft: #26331a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1a1220; --card: #251a2d; --ink: #f6eaf2; --muted: #b3a2bb; --line: #3a2c44;
+  --shirt: #ff7aa3; --shirt-soft: #3d2032; --sun: #ffd65a; --gas: #a6d64e; --gas-soft: #26331a;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: grid; gap: 26px; }
+header { display: grid; gap: 6px; }
+h1 { margin: 0; font: 400 clamp(30px, 7vw, 42px)/1 var(--display); letter-spacing: .01em; text-wrap: balance; }
+h1 span { color: var(--shirt); }
+.lede { margin: 0; color: var(--muted); max-width: 52ch; line-height: 1.45; }
+
+form.add { display: flex; gap: 8px; flex-wrap: wrap; }
+form.add input {
+  flex: 1 1 260px; min-width: 0; font: 700 16px var(--body); color: var(--ink);
+  background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 12px 14px;
+}
+form.add input:focus { outline: none; border-color: var(--shirt); }
+button {
+  font: 800 14px var(--body); color: var(--ink); background: var(--card);
+  border: 2px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer;
+}
+button:hover { border-color: var(--muted); }
+button:focus-visible, .card:focus-visible { outline: 3px solid var(--shirt); outline-offset: 2px; }
+button.primary { background: var(--shirt); border-color: var(--shirt); color: #fff; padding-inline: 18px; }
+button.primary:hover { filter: brightness(1.05); }
+
+section { display: grid; gap: 10px; }
+.lane-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+h2 { margin: 0; font: 900 12px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.count { font: 800 12px var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
+ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.card {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start;
+  background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 12px;
+}
+.card.doing { border-color: var(--sun); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun) 35%, transparent); }
+.card.done { background: transparent; }
+.card.done .title { text-decoration: line-through; color: var(--muted); }
+.card.dragging { opacity: .45; }
+.card.drop-before { box-shadow: 0 -4px 0 0 var(--shirt); }
+.card.drop-after { box-shadow: 0 4px 0 0 var(--shirt); }
+.grip {
+  width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+  color: var(--muted); cursor: grab; user-select: none; font: 900 16px var(--body); line-height: 1;
+}
+.pos {
+  width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+  background: var(--shirt-soft); color: var(--shirt); font: 900 13px var(--body); font-variant-numeric: tabular-nums;
+}
+.body { min-width: 0; display: grid; gap: 2px; }
+.title { font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; cursor: text; }
+.title[contenteditable="true"] { outline: 2px dashed var(--shirt); outline-offset: 3px; border-radius: 4px; }
+.note { color: var(--muted); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.chip {
+  justify-self: start; margin-top: 4px; font: 900 11px var(--body); letter-spacing: .06em; text-transform: uppercase;
+  background: var(--sun); color: #2b1838; border-radius: 999px; padding: 3px 9px;
+}
+.actions { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.actions button { padding: 5px 9px; font-size: 13px; }
+.actions .tick { color: var(--gas); }
+.actions .del-yes { background: var(--shirt); border-color: var(--shirt); color: #fff; }
+
+.empty, .status {
+  border: 2px dashed var(--line); border-radius: 14px; padding: 16px; color: var(--muted); line-height: 1.45;
+}
+details summary { cursor: pointer; list-style: none; }
+details summary::-webkit-details-marker { display: none; }
+details summary h2::before { content: "▸ "; }
+details[open] summary h2::before { content: "▾ "; }
+details > ol { margin-top: 10px; }
+
+@media (max-width: 460px) {
+  .card { grid-template-columns: auto 1fr; }
+  .actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: box-shadow .12s, opacity .12s; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Gus <span>Board</span></h1>
+    <p class="lede">Add things for Claude to build. Drag cards into the order you want; Claude works from the top of Up next and moves cards along as it goes.</p>
+  </header>
+
+  <form class="add" id="add-form">
+    <input id="new-task" type="text" autocomplete="off" maxlength="300" placeholder="e.g. Make Gus wear a party hat on Fridays" aria-label="New task">
+    <button class="primary" type="submit">Add</button>
+  </form>
+
+  <p class="status" id="status">Loading the board…</p>
+
+  <section id="lane-doing" hidden>
+    <div class="lane-head"><h2>Claude is on it</h2><span class="count" id="count-doing"></span></div>
+    <ol id="list-doing"></ol>
+  </section>
+
+  <section id="lane-todo">
+    <div class="lane-head"><h2>Up next</h2><span class="count" id="count-todo"></span></div>
+    <ol id="list-todo"></ol>
+    <p class="empty" id="empty-todo" hidden>Nothing queued. Type an idea above and press Add; it goes to the bottom of this list.</p>
+  </section>
+
+  <section id="lane-done">
+    <details id="done-details">
+      <summary><div class="lane-head"><h2>Done</h2><span class="count" id="count-done"></span></div></summary>
+      <ol id="list-done"></ol>
+    </details>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const statusEl = $("status");
+  let db = null, tasks = [], canWrite = true, confirmingDelete = null, editing = null;
+
+  function setStatus(text) { statusEl.textContent = text; statusEl.hidden = !text; }
+
+  // ---------- Render ----------
+  function render() {
+    const by = s => tasks.filter(t => t.status === s).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const doing = by("doing"), todo = by("todo"), done = by("done").sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0));
+    $("lane-doing").hidden = doing.length === 0;
+    $("count-doing").textContent = doing.length;
+    $("count-todo").textContent = todo.length;
+    $("count-done").textContent = done.length;
+    $("empty-todo").hidden = todo.length > 0;
+    fill($("list-doing"), doing, "doing");
+    fill($("list-todo"), todo, "todo");
+    fill($("list-done"), done, "done");
+  }
+
+  function fill(list, items, lane) {
+    if (editing && list.contains(document.activeElement)) return;   // don't yank text out from under someone typing
+    list.textContent = "";
+    items.forEach((t, i) => list.appendChild(card(t, i, lane, items)));
+  }
+
+  function card(t, i, lane, items) {
+    const li = document.createElement("li");
+    li.className = "card " + lane;
+    li.dataset.id = t.id;
+
+    const lead = document.createElement("div");
+    if (lane === "todo" && canWrite) {
+      lead.className = "grip"; lead.textContent = "⠿"; lead.title = "Drag to reorder";
+      li.draggable = true;
+    } else if (lane === "todo") {
+      lead.className = "pos"; lead.textContent = i + 1;
+    } else {
+      lead.className = "pos"; lead.textContent = lane === "done" ? "✓" : "▶";
+    }
+    li.appendChild(lead);
+
+    const body = document.createElement("div");
+    body.className = "body";
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = t.title;
+    if (canWrite && lane !== "done") {
+      title.title = "Click to edit";
+      title.addEventListener("click", () => startEdit(title, t));
+    }
+    body.appendChild(title);
+    if (t.note) { const n = document.createElement("div"); n.className = "note"; n.textContent = t.note; body.appendChild(n); }
+    if (lane === "doing") { const c = document.createElement("span"); c.className = "chip"; c.textContent = "In progress"; body.appendChild(c); }
+    li.appendChild(body);
+
+    if (canWrite) {
+      const a = document.createElement("div");
+      a.className = "actions";
+      if (confirmingDelete === t.id) {
+        a.append(btn("Delete", "del-yes", () => remove(t)), btn("Keep", "", () => { confirmingDelete = null; render(); }));
+      } else {
+        if (lane === "todo") {
+          if (i > 0) a.append(btn("↑", "", () => move(t, items, i - 1), "Move up"));
+          if (i < items.length - 1) a.append(btn("↓", "", () => move(t, items, i + 1), "Move down"));
+          if (i > 0) a.append(btn("Top", "", () => move(t, items, 0), "Move to the top"));
+        }
+        if (lane !== "done") a.append(btn("Done", "tick", () => setStatus2(t, "done")));
+        else a.append(btn("Reopen", "", () => setStatus2(t, "todo")));
+        a.append(btn("✕", "", () => { confirmingDelete = t.id; render(); }, "Delete"));
+      }
+      li.appendChild(a);
+    }
+
+    if (li.draggable) wireDrag(li, t, items);
+    return li;
+  }
+
+  function btn(label, cls, fn, aria) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = label; if (cls) b.className = cls;
+    if (aria) { b.setAttribute("aria-label", aria); b.title = aria; }
+    b.addEventListener("click", fn);
+    return b;
+  }
+
+  // ---------- Editing ----------
+  function startEdit(el, t) {
+    if (editing) return;
+    editing = t.id;
+    el.contentEditable = "true";
+    el.focus();
+    const range = document.createRange(); range.selectNodeContents(el);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    const finish = async (save) => {
+      el.removeEventListener("keydown", onKey); el.removeEventListener("blur", onBlur);
+      el.contentEditable = "false";
+      const text = el.textContent.trim();
+      editing = null;
+      if (save && text && text !== t.title) await write(t.id, { title: text });
+      render();
+    };
+    const onKey = e => {
+      if (e.key === "Enter") { e.preventDefault(); finish(true); }
+      if (e.key === "Escape") { el.textContent = t.title; finish(false); }
+    };
+    const onBlur = () => finish(true);
+    el.addEventListener("keydown", onKey);
+    el.addEventListener("blur", onBlur);
+  }
+
+  // ---------- Ordering ----------
+  // Orders are numbers with gaps; a move takes the midpoint of its new neighbours.
+  function orderAt(items, index, movingId) {
+    const rest = items.filter(x => x.id !== movingId);
+    const before = rest[index - 1], after = rest[index];
+    if (!before && !after) return 1000;
+    if (!before) return (after.order ?? 0) - 1000;
+    if (!after) return (before.order ?? 0) + 1000;
+    return ((before.order ?? 0) + (after.order ?? 0)) / 2;
+  }
+  function move(t, items, index) { write(t.id, { order: orderAt(items, index, t.id) }); }
+
+  let dragId = null;
+  function wireDrag(li, t, items) {
+    li.addEventListener("dragstart", e => { dragId = t.id; li.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", t.id); });
+    li.addEventListener("dragend", () => { dragId = null; li.classList.remove("dragging"); clearDropMarks(); });
+    li.addEventListener("dragover", e => {
+      if (!dragId || dragId === t.id) return;
+      e.preventDefault();
+      const r = li.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2;
+      clearDropMarks();
+      li.classList.add(after ? "drop-after" : "drop-before");
+    });
+    li.addEventListener("drop", e => {
+      e.preventDefault();
+      if (!dragId || dragId === t.id) return;
+      const r = li.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2;
+      const rest = items.filter(x => x.id !== dragId);
+      const idx = rest.findIndex(x => x.id === t.id) + (after ? 1 : 0);
+      write(dragId, { order: orderAt(items, idx, dragId) });
+      clearDropMarks();
+    });
+  }
+  function clearDropMarks() { document.querySelectorAll(".drop-before,.drop-after").forEach(n => n.classList.remove("drop-before", "drop-after")); }
+
+  // ---------- Writes ----------
+  async function write(id, fields) {
+    if (!db) return;
+    try { await db.collection("tasks").doc(id).update(fields); }
+    catch (e) { handleWriteError(e); }
+  }
+  async function setStatus2(t, status) {
+    const fields = { status };
+    if (status === "done") fields.doneAt = Date.now();
+    if (status === "todo") {
+      const todo = tasks.filter(x => x.status === "todo");
+      fields.order = todo.length ? Math.max(...todo.map(x => x.order ?? 0)) + 1000 : 1000;
+    }
+    await write(t.id, fields);
+  }
+  async function remove(t) {
+    confirmingDelete = null;
+    try { await db.collection("tasks").doc(t.id).delete(); } catch (e) { handleWriteError(e); }
+  }
+  function handleWriteError(e) {
+    if (e && e.code === "invalid_argument") { canWrite = false; setStatus("You can look at this board but not change it."); render(); }
+    else if (e && e.code === "quota_exceeded") setStatus("The board is full. Delete some done cards to add more.");
+    else setStatus("That change didn't save. Check your connection and try again.");
+  }
+
+  $("add-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const input = $("new-task");
+    const title = input.value.trim();
+    if (!title || !db) return;
+    const todo = tasks.filter(x => x.status === "todo");
+    const order = todo.length ? Math.max(...todo.map(x => x.order ?? 0)) + 1000 : 1000;
+    input.value = "";
+    try { await db.collection("tasks").add({ title, note: "", status: "todo", order, createdAt: Date.now() }); }
+    catch (err) { input.value = title; handleWriteError(err); }
+  });
+
+  // ---------- Load ----------
+  render();
+  (async () => {
+    const api = window.claude && typeof window.claude.use === "function" ? window.claude : null;
+    db = api ? await api.use("db") : null;
+    if (!db) { setStatus("Open this board on claude.ai while signed in to see and change tasks."); $("add-form").hidden = true; return; }
+    const user = await api.use("user");
+    if (user && typeof user.can === "function") {
+      const w = await user.can("data.write");
+      if (w === false) { canWrite = false; $("add-form").hidden = true; }
+    }
+    const slow = setTimeout(() => setStatus("Can't reach the board yet. It will fill in once the connection is back."), 10000);
+    db.collection("tasks").onSnapshot(snap => {
+      tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (!snap.metadata.fromCache) { clearTimeout(slow); setStatus(""); }
+      render();
+    }, err => {
+      clearTimeout(slow);
+      setStatus(err && err.code === "revoked" ? "" : "The board stopped updating. Reload the page to reconnect.");
+    });
+  })();
+})();
+</script>

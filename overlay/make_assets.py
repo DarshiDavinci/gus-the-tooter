@@ -131,6 +131,22 @@ def hiss(dur, rng):
     return out
 
 
+def boom(dur, rng):
+    """The low thump under the explosion: a dropping sine and a rumble of dark noise."""
+    n = int(dur * SR)
+    low = Biquad("low", 180, 0.7)
+    low2 = Biquad("low", 120, 0.7)
+    out, ph = [], 0.0
+    for i in range(n):
+        t = i / SR
+        f = 30 + 40 * math.exp(-t * 6)
+        ph += f / SR
+        thump = math.sin(2 * math.pi * ph) * math.exp(-t * 2.2)
+        rumble = low2(low(rng.uniform(-1, 1))) * 6 * math.exp(-t * 1.4)
+        out.append(thump * 0.9 + rumble * min(1, t / 0.01))
+    return out
+
+
 def room(buf):
     """A small room: a few early reflections, so it doesn't sound like a test tone."""
     out = buf + [0.0] * int(0.12 * SR)
@@ -187,6 +203,10 @@ def main():
                             (0.52, fart(0.5, 165, 160, rng=rng, wet=0.05, rasp=0.25, body=480, sputter=0.05, flutter=6)),
                             (1.04, fart(0.95, 105, 62, rng=rng, wet=0.15, rasp=0.3, body=320, sputter=0.4, flutter=5))]))
     write("sbd.wav", hiss(1.8, rng), 0.25)
+    # The big one, when he's left unclicked for too long.
+    write("explosion.wav", mix([(0.0, boom(2.6, rng)),
+                                (0.0, [v * 0.9 for v in fart(2.4, 52, 36, rng=rng, wet=0.35, rasp=0.5, body=200,
+                                                             body2=560, sputter=0.5, drift=0.1, attack=0.004)])]), 0.95)
     print("sounds written")
 
 
