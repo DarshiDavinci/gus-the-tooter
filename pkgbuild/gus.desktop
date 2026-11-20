@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Gus
+Comment=Gus pops up at the bottom of your screen and farts when you click him
+Exec=gus
+Icon=gus
+Terminal=false
+Categories=Game;
+Keywords=fart;toot;prank;
+StartupWMClass=gus
