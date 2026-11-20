@@ -1,0 +1,19 @@
+#!/bin/sh
+# Installs Gus for the current user only, into ~/.local, without a password.
+# bin/install (the pacman package) is the system-wide alternative.
+set -eu
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+"$ROOT/bin/build"
+
+install -Dm755 "$ROOT/build/gus" "$HOME/.local/bin/gus"
+install -Dm644 "$ROOT/build/overlay/shell.qml" "$DATA/gus/overlay/shell.qml"
+install -Dm644 -t "$DATA/gus/overlay" "$ROOT"/build/overlay/*.svg
+install -Dm644 -t "$DATA/gus/overlay/sounds" "$ROOT"/build/overlay/sounds/*.wav
+install -Dm644 "$ROOT/pkgbuild/gus.svg" "$DATA/icons/hicolor/scalable/apps/gus.svg"
+sed "s|^Exec=gus|Exec=$HOME/.local/bin/gus|" "$ROOT/pkgbuild/gus.desktop" > "$DATA/applications/gus.desktop"
+
+update-desktop-database "$DATA/applications" 2>/dev/null || true
+gtk-update-icon-cache -q "$DATA/icons/hicolor" 2>/dev/null || true
+echo "Installed Gus. Find him in the app launcher (Super + Space)."

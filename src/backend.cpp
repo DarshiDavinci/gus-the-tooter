@@ -53,6 +53,10 @@ QString Backend::defaultOverlayDirectory() {
     const QString besideBinary = QCoreApplication::applicationDirPath() + "/overlay";
     if (QFileInfo::exists(besideBinary + "/shell.qml"))
         return besideBinary;
+    // ~/.local/share for a per-user install (bin/install-user), /usr/share for the package.
+    const QString installed = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "gus/overlay/shell.qml");
+    if (!installed.isEmpty())
+        return QFileInfo(installed).absolutePath();
     return "/usr/share/gus/overlay";
 }
 
