@@ -8,8 +8,8 @@ DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 "$ROOT/bin/build"
 
 install -Dm755 "$ROOT/build/gus" "$HOME/.local/bin/gus"
-install -Dm644 "$ROOT/build/overlay/shell.qml" "$DATA/gus/overlay/shell.qml"
-install -Dm644 -t "$DATA/gus/overlay" "$ROOT"/build/overlay/*.svg
+rm -rf "$DATA/gus/overlay"
+install -Dm644 -t "$DATA/gus/overlay" "$ROOT"/build/overlay/*.qml
 install -Dm644 -t "$DATA/gus/overlay/sounds" "$ROOT"/build/overlay/sounds/*.wav
 install -Dm644 "$ROOT/pkgbuild/gus.svg" "$DATA/icons/hicolor/scalable/apps/gus.svg"
 sed "s|^Exec=gus|Exec=$HOME/.local/bin/gus|" "$ROOT/pkgbuild/gus.desktop" > "$DATA/applications/gus.desktop"

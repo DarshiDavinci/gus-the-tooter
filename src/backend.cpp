@@ -70,6 +70,7 @@ bool Backend::load() {
     m_minWait = qBound(MinWaitFloor, s.value("minWait").toInt(m_minWait), WaitCeiling);
     m_maxWait = qBound(m_minWait, s.value("maxWait").toInt(m_maxWait), WaitCeiling);
     m_stay = qBound(StayFloor, s.value("stay").toInt(m_stay), StayCeiling);
+    m_speed = qBound(SpeedFloor, s.value("speed").toInt(m_speed), SpeedCeiling);
     m_sound = s.value("sound").toBool(m_sound);
     m_volume = qBound(0, s.value("volume").toInt(m_volume), 100);
     if (s.value("toots").isArray()) {
@@ -89,7 +90,7 @@ bool Backend::save() {
         setError(tr("Couldn't create %1.").arg(m_config));
         return false;
     }
-    QJsonObject s{{"minWait", m_minWait}, {"maxWait", m_maxWait}, {"stay", m_stay},
+    QJsonObject s{{"minWait", m_minWait}, {"maxWait", m_maxWait}, {"stay", m_stay}, {"speed", m_speed},
                   {"sound", m_sound}, {"volume", m_volume}, {"toots", QJsonArray::fromStringList(m_toots)}};
     // QSaveFile writes beside the target and renames, so the overlay never reads half a file.
     QSaveFile file(settingsPath());
@@ -124,6 +125,13 @@ void Backend::setStay(int seconds) {
     seconds = qBound(StayFloor, seconds, StayCeiling);
     if (seconds == m_stay) return;
     m_stay = seconds;
+    changed();
+}
+
+void Backend::setSpeed(int pixelsPerSecond) {
+    pixelsPerSecond = qBound(SpeedFloor, pixelsPerSecond, SpeedCeiling);
+    if (pixelsPerSecond == m_speed) return;
+    m_speed = pixelsPerSecond;
     changed();
 }
 

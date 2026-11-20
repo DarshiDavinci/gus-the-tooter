@@ -8,10 +8,12 @@ cd "$ROOT/build"
 qmake6 "$ROOT/gus.pro"
 make -j"$(nproc)"
 
-# Gus himself is a Quickshell overlay. His faces and toots are generated, not
+# Gus himself is a Quickshell overlay. His toots are synthesised, not
 # committed, and land beside the binary where the app looks for them.
 mkdir -p "$ROOT/build/overlay"
-cp "$ROOT/overlay/shell.qml" "$ROOT/build/overlay/"
+rm -rf "$ROOT/build/overlay"
+mkdir -p "$ROOT/build/overlay"
+cp "$ROOT"/overlay/*.qml "$ROOT/build/overlay/"
 python3 "$ROOT/overlay/make_assets.py" "$ROOT/build/overlay" >/dev/null
 
 echo "Built $ROOT/build/gus"

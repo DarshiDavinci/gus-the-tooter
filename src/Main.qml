@@ -74,7 +74,7 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
                             color: backend.running ? theme.accent : "#9a9aa2"
-                            text: backend.running ? qsTr("Lurking at the bottom of your screen")
+                            text: backend.running ? qsTr("Wandering along the bottom of your screen")
                                                   : qsTr("Off. Gus is at home.")
                         }
                     }
@@ -112,13 +112,13 @@ ApplicationWindow {
                 Section { title: qsTr("Timing") }
 
                 Setting {
-                    label: qsTr("Pops up every")
+                    label: qsTr("Shows up every")
                     value: backend.minWait === backend.maxWait
                            ? qsTr("%n seconds", "", backend.minWait)
                            : qsTr("%1–%2 seconds").arg(backend.minWait).arg(backend.maxWait)
                     RangeSlider {
                         Layout.fillWidth: true
-                        from: 3; to: 120; stepSize: 1; snapMode: RangeSlider.SnapAlways
+                        from: 3; to: 120; stepSize: 1
                         first.value: backend.minWait
                         second.value: backend.maxWait
                         first.onMoved: backend.minWait = Math.round(first.value)
@@ -127,13 +127,27 @@ ApplicationWindow {
                 }
 
                 Setting {
-                    label: qsTr("Waits to be clicked for")
+                    label: qsTr("Wanders around for")
                     value: qsTr("%n seconds", "", backend.stay)
                     Slider {
                         Layout.fillWidth: true
-                        from: 2; to: 30; stepSize: 1; snapMode: Slider.SnapAlways
+                        from: 5; to: 120; stepSize: 1
                         value: backend.stay
                         onMoved: backend.stay = Math.round(value)
+                    }
+                }
+
+                Setting {
+                    label: qsTr("Walking speed")
+                    value: backend.speed < 60 ? qsTr("Slow stroll")
+                         : backend.speed < 120 ? qsTr("Easy pace")
+                         : backend.speed < 190 ? qsTr("Brisk")
+                         : qsTr("Power walk")
+                    Slider {
+                        Layout.fillWidth: true
+                        from: 30; to: 250; stepSize: 5
+                        value: backend.speed
+                        onMoved: backend.speed = Math.round(value)
                     }
                 }
 

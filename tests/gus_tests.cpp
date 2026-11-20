@@ -33,6 +33,7 @@ private slots:
             backend.setMinWait(10);
             backend.setMaxWait(40);
             backend.setStay(9);
+            backend.setSpeed(150);
             backend.setSound(false);
             backend.setVolume(35);
             backend.setTootEnabled("tuba", false);
@@ -42,6 +43,7 @@ private slots:
         QCOMPARE(again.minWait(), 10);
         QCOMPARE(again.maxWait(), 40);
         QCOMPARE(again.stay(), 9);
+        QCOMPARE(again.speed(), 150);
         QCOMPARE(again.sound(), false);
         QCOMPARE(again.volume(), 35);
         QVERIFY(!again.toots().contains("tuba"));
@@ -62,6 +64,10 @@ private slots:
         QCOMPARE(backend.minWait(), int(Backend::MinWaitFloor));
         backend.setStay(500);
         QCOMPARE(backend.stay(), int(Backend::StayCeiling));
+        backend.setSpeed(1);
+        QCOMPARE(backend.speed(), int(Backend::SpeedFloor));
+        backend.setSpeed(9999);
+        QCOMPARE(backend.speed(), int(Backend::SpeedCeiling));
         backend.setToots({"opera", "nonsense"});
         QCOMPARE(backend.toots(), QStringList{"opera"});
     }
