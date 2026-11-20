@@ -7,12 +7,12 @@ holds the same list, so use whichever you like.
 
 ## Up next
 
-- [ ] Update the README for my cousin
-- [ ] Commit the game and graphics upgrade
-- [ ] Put Gus on GitHub
+- [ ] Put Gus on GitHub (waiting on you: log in with `gh auth login`)
 
 ## Done
 
+- [x] Update the README for my cousin
+- [x] Commit the game and graphics upgrade
 - [x] Set up the task board and TODO.md
 - [x] Big graphics upgrade for Gus
 - [x] Click counter on his shirt, bigger butt when he farts
